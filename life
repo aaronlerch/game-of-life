@@ -1,0 +1,173 @@
+#!/usr/bin/env ruby
+
+# game of life
+
+class Grid
+    KILL_LINE_CHAR = "\x1B[K"
+    CURSOR_UP_CHAR = "\x1B[A"
+
+    attr_accessor :rows, :cols, :contents
+
+    def initialize(rows,cols,seed)
+        @rows = rows
+        @cols = cols
+        @contents = []
+        @cells = []
+        rows.times do |y|
+            items = []
+            cols.times do |x|
+                is_alive = seed.nil? ? false : seed.call(x,y)
+                cell = Cell.new(self,x,y,is_alive)
+                @cells << cell
+                items << cell
+            end
+            @contents << items
+        end
+    end
+
+    def prime
+        @cells.each do |cell|
+            cell.prime
+        end
+    end
+
+    def apply
+        mutated = false
+        @cells.each do |cell|
+            changed = cell.step
+            mutated = true if changed
+        end
+        mutated
+    end
+
+    def cell_at(x,y)
+        if x < 0 || y < 0
+            return nil
+        end
+
+        cell = nil
+        row = @contents[y]
+        cell = row[x] if row
+        cell
+    end
+
+    def render(init=false)
+        unless init
+            clear(rows+2)
+        end
+    
+        # Header
+        cols.times do
+            print "-"
+        end
+        puts "--"
+    
+        @contents.each do |row|
+            print "|"
+            row.each do |cell|
+                print cell
+            end
+            puts "|"
+        end
+    
+        # Footer
+        cols.times do
+            print "-"
+        end
+        puts "--"
+    end
+
+    def clear(lines)
+        lines.times { print "#{CURSOR_UP_CHAR}#{KILL_LINE_CHAR}" }
+    end
+
+    def debug
+        @cells.select { |c| c.y == 2 && c.x == 0 }.each do |cell|
+            puts cell.to_s_debug
+            puts "--neighbors--"
+            cell.neighbors(self).select { |c| c }.each { |cell| puts cell.to_s_debug }
+        end
+    end
+end
+
+class Cell
+    attr_reader :x, :y, :alive, :next_state
+
+    def initialize(grid,x,y,alive=false)
+        @grid = grid
+        @x = x
+        @y = y
+        @alive = alive
+        @next_state = alive
+    end
+
+    def prime
+        # compute next state:
+        # live => dead if < 2 neighbors
+        # live => live if 2-3 neighbors
+        # live => dead if > 3 neighbors
+        # dead => live if 3 neighbors
+
+        count = neighbors.count { |cell| cell && cell.alive }
+        if alive
+            @next_state = false if count < 2 || count > 3
+        else
+            @next_state = true if count == 3
+        end
+    end
+
+    def neighbors
+        [
+            #above
+            @grid.cell_at(x-1,y-1),
+            @grid.cell_at(x,y-1),
+            @grid.cell_at(x+1,y-1),
+
+            # beside
+            @grid.cell_at(x-1,y),
+            @grid.cell_at(x+1,y),
+
+            #below
+            @grid.cell_at(x-1,y+1),
+            @grid.cell_at(x,y+1),
+            @grid.cell_at(x+1,y+1)
+        ]
+    end
+
+    def step
+        changed = @alive != @next_state
+        @alive = @next_state
+        changed
+    end
+
+    def to_s
+        alive ? "@" : " "
+    end
+
+    def to_s_debug
+        "[#{x},#{y}] -- state: #{alive} | next: #{next_state}"
+    end
+end
+
+class Game
+    attr_accessor :grid
+
+    def initialize(rows: 20, cols: 20, step: 0.5, seed: -> (x,y) { rand(10) == 5 })
+        @step = step
+        @grid = Grid.new(rows,cols,seed)
+    end
+
+    def play
+        @grid.render(true)
+        mutated = true
+        while mutated
+            sleep @step
+            grid.prime
+            mutated = grid.apply
+            grid.render
+        end
+    end
+end
+
+game = Game.new(rows: 20, cols: 20, step: 0.1)
+game.play
