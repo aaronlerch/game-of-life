@@ -2,6 +2,10 @@
 
 # game of life
 
+DEFAULT_ROWS = (ARGV[0] || 20).to_i
+DEFAULT_COLS = (ARGV[1] || 20).to_i
+DEFAULT_SPEED = (ARGV[2] || 0.1).to_f
+
 class Grid
     KILL_LINE_CHAR = "\x1B[K"
     CURSOR_UP_CHAR = "\x1B[A"
@@ -169,5 +173,5 @@ class Game
     end
 end
 
-game = Game.new(rows: 20, cols: 20, step: 0.1)
+game = Game.new(rows: DEFAULT_ROWS, cols: DEFAULT_COLS, step: DEFAULT_SPEED)
 game.play
