@@ -12,6 +12,7 @@ module Renderer
           Curses.noecho
           Curses.init_screen
           Curses.crmode
+          Curses.curs_set 0 # invisible
           Curses.start_color
         end
 
@@ -44,15 +45,16 @@ module Renderer
       @options = options
 
       @caption = @options[:caption] || "Game of Life"
+      @speed = @options[:speed] || DEFAULT_SPEED
       begin
         # We need to init Curses in order to get the width/height
         DisplayHelper.init
         @width = @options[:width] || Curses.cols
         @height = @options[:height] || Curses.lines
+        Curses.timeout = @speed
       ensure
         DisplayHelper.close
       end
-      @speed = @options[:speed] || DEFAULT_SPEED
     end
 
     def show
@@ -63,7 +65,12 @@ module Renderer
         while true
           @game.step!
           draw
-          sleep @speed
+
+          # Normally we'd sleep for @speed but instead we are using Curses.timeout to wait
+          # for the duration of the wait period, so that we can use the opportunity to
+          # gather input and take actions
+          char = Curses.getch
+          break if char == 'q'
         end
       rescue Interrupt => e
       ensure
