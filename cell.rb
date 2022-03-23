@@ -4,4 +4,8 @@ class Cell
       @x, @y = x, y
       @pos = [@x, @y]
     end
+
+    def to_s
+      "[#{@x},#{@y}]"
+    end
   end

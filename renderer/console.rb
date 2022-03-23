@@ -1,50 +1,88 @@
+require 'curses'
+
 module Renderer
   class Console
+    DEFAULT_SPEED=0.016
+
+    class DisplayHelper
+      WHITE=255
+
+      class << self
+        def init
+          Curses.noecho
+          Curses.init_screen
+          Curses.crmode
+          Curses.start_color
+        end
+
+        def with_color(color)
+          Curses.init_pair(color, color, 0)
+          Curses.attrset(Curses.color_pair(color))
+
+          yield
+
+          Curses.init_pair(WHITE, WHITE, 0)
+          Curses.attrset(Curses.color_pair(WHITE))
+        end
+
+        def draw
+          Curses.refresh
+          yield
+          Curses.refresh
+        end
+
+        def close
+          Curses.close_screen
+        end
+      end
+    end
+
+    attr_reader :options, :width, :height
+
     def initialize(game, options={})
       @game = game
       @options = options
 
-      @x_bounds = @options[:x_bounds]
-      @y_bounds = @options[:y_bounds]
-      @caption = @options[:caption]
+      @caption = @options[:caption] || "Game of Life"
+      begin
+        # We need to init Curses in order to get the width/height
+        DisplayHelper.init
+        @width = @options[:width] || Curses.cols
+        @height = @options[:height] || Curses.lines
+      ensure
+        DisplayHelper.close
+      end
+      @speed = @options[:speed] || DEFAULT_SPEED
     end
 
     def show
-      raise "not implemented yet"
+      # this should start the event loop which triggers game steps and renders the game
+      begin
+        DisplayHelper.init
+        # Loop until ESC pressed (or CTRL+C)
+        while true
+          @game.step!
+          draw
+          sleep @speed
+        end
+      rescue Interrupt => e
+      ensure
+        DisplayHelper.close
+      end
     end
 
-    def render(world, adornment=nil)
-      o = "" + adornment.to_s # o is for output
-      border = "=" * (@x_bounds+1)
-      o << border << "\n"
-
-      # Dynamic render window: figure out min and max y and x values in the map
-      min_x = min_y = 0
-      max_x = @x_bounds
-      max_y = @y_bounds
-
-      # use a dynamic window size
-      if world.count > 0
-        min_x = world.min_by { |i| i[0][0] }[0][0]
-        max_x = world.max_by { |i| i[0][0] }[0][0]
-        min_y = world.min_by { |i| i[0][1] }[0][1]
-        max_y = world.max_by { |i| i[0][1] }[0][1]
-      end
-
-      (min_y...max_y).each do |y|
-        (min_x...max_x).each do |x|
-          cell = world.cell_at x, y
-          if cell
-            o << '*'
-          else
-            o << ' '
+    def draw
+      Curses.clear
+      DisplayHelper.draw do
+        @game.world.each_value do |cell|
+          # don't draw items outside our viewport
+          next if cell.x < 0 || cell.x > width || cell.y < 0 || cell.y > height
+          Curses.setpos(cell.y, cell.x)
+          DisplayHelper.with_color(DisplayHelper::WHITE) do
+              Curses.addstr '*'
           end
         end
-        o << "\n"
       end
-      o << border
-
-      puts o
     end
   end
 end

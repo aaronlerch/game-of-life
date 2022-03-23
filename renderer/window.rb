@@ -5,10 +5,11 @@ module Renderer
         DEFAULT_CELL_SIZE=10
 
         class GolWindow < Gosu::Window
-            def initialize(width, height)
+            def initialize(width, height, cell_size)
                 # colors
                 @background_color = Gosu::Color.new 0xffdedede
                 @cell_color = Gosu::Color.new 0xff000000
+                @cell_size = cell_size || DEFAULT_CELL_SIZE
 
                 super(width, height)
             end
@@ -32,9 +33,11 @@ module Renderer
             def draw
                 draw_background
                 @game.world.each_value do |cell|
+                    # don't draw items outside our viewport
+                    next if cell.x < 0 || cell.x * @cell_size > width || cell.y < 0 || cell.y * @cell_size > height
                     draw_rect(
-                        cell.x * DEFAULT_CELL_SIZE, cell.y * DEFAULT_CELL_SIZE,
-                        DEFAULT_CELL_SIZE, DEFAULT_CELL_SIZE,
+                        cell.x * @cell_size, cell.y * @cell_size,
+                        @cell_size, @cell_size,
                         @cell_color,
                         1 # z = 1, in front of the bg
                     )
@@ -63,7 +66,7 @@ module Renderer
 
             window_width, window_height = (@width * @cell_size), (@height * @cell_size)
             
-            @window = GolWindow.new window_width, window_height
+            @window = GolWindow.new window_width, window_height, @cell_size
             @window.game = game
             @window.caption = @caption
         end

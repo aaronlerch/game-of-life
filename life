@@ -13,18 +13,16 @@ require_relative 'renderer/window'
 # - all other cells die or stay dead
 
 POPULATE_RANGE=(0..1)
-CYCLES = 100
-STEP_SPEED=0.1
-
-#WIDTH=50
-#HEIGHT=20
-WIDTH=128
-HEIGHT=96
 
 world = World.new
 stats = Stats.new
 game = Game.new(world, stats)
-renderer = Renderer::Window.new(game)
+renderer = case ARGV.first
+when /^(win|window)$/i
+  Renderer::Window.new(game)
+else
+  Renderer::Console.new(game)
+end
 
 game.populate renderer.width, renderer.height, POPULATE_RANGE
 renderer.show
