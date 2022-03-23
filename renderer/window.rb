@@ -10,6 +10,7 @@ module Renderer
                 @background_color = Gosu::Color.new 0xffdedede
                 @cell_color = Gosu::Color.new 0xff000000
                 @cell_size = cell_size || DEFAULT_CELL_SIZE
+                @paused = false
 
                 super(width, height)
             end
@@ -19,15 +20,18 @@ module Renderer
             end
 
             def button_down(id)
-                if id == Gosu::KB_ESCAPE
+                case id
+                when Gosu::KB_ESCAPE
                     close
+                when Gosu::KB_SPACE
+                    @paused = !@paused
                 else
                     super
                 end
             end
 
             def update
-                @game.step!
+                @game.step! unless @paused
             end
 
             def draw
