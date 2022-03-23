@@ -10,12 +10,16 @@ class Game
         @generation = 0
     end
     
-    def populate(initial_fill_count, window_bounds_x, window_bounds_y)
-        # Fill the world by placing N random spots
-        initial_fill_count.times do |i|
-            x = rand(0..window_bounds_x)
-            y = rand(0..window_bounds_y)
-            @world.spawn x, y
+    def populate(width, height, rand_range)
+        # For each visible cell, randomly assign life
+        # starting with a 50% chance
+        alive_value = rand_range.min
+        width.times do |x|
+            height.times do |y|
+                if rand(rand_range) == alive_value
+                    @world.spawn x, y
+                end
+            end
         end
     end
 

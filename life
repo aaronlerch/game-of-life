@@ -12,26 +12,21 @@ require_relative 'renderer/window'
 # - dead cell with 3 neighbors becomes alive
 # - all other cells die or stay dead
 
-INITIAL_FILL_CELL_COUNT=600
+POPULATE_RANGE=(0..1)
 CYCLES = 100
 STEP_SPEED=0.1
 
-#WINDOW_BOUNDS_X=50
-#WINDOW_BOUNDS_Y=20
-WINDOW_BOUNDS_X=128
-WINDOW_BOUNDS_Y=96
+#WIDTH=50
+#HEIGHT=20
+WIDTH=128
+HEIGHT=96
 
 world = World.new
 stats = Stats.new
 game = Game.new(world, stats)
-game.populate INITIAL_FILL_CELL_COUNT, WINDOW_BOUNDS_X, WINDOW_BOUNDS_Y
+renderer = Renderer::Window.new(game)
 
-#renderer = Renderer::Console.new({
-renderer = Renderer::Window.new(game, {
-  x_bounds: WINDOW_BOUNDS_X,
-  y_bounds: WINDOW_BOUNDS_Y
-})
-
+game.populate renderer.width, renderer.height, POPULATE_RANGE
 renderer.show
 
 puts "\n\n=== STATS ==="

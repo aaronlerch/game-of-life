@@ -50,22 +50,22 @@ module Renderer
             end
         end
 
-        attr_reader :options
+        attr_reader :options, :width, :height
 
         def initialize(game, options={})
             @game = game
             @options = options
 
-            @x_bounds = @options[:x_bounds]
-            @y_bounds = @options[:y_bounds]
-            @caption = @options[:caption]
+            @caption = @options[:caption] || "Game of Life"
             @cell_size = (@options[:cell_size] || DEFAULT_CELL_SIZE).to_i
+            @width = @options[:width] || (Gosu.available_width / @cell_size)
+            @height = @options[:height] || (Gosu.available_height / @cell_size)
 
-            width, height = (@x_bounds * @cell_size), (@y_bounds * @cell_size)
+            window_width, window_height = (@width * @cell_size), (@height * @cell_size)
             
-            @window = GolWindow.new width, height
+            @window = GolWindow.new window_width, window_height
             @window.game = game
-            @window.caption = @caption || "Game of Life"
+            @window.caption = @caption
         end
 
         def show
