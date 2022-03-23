@@ -22,6 +22,7 @@ module Renderer
             def button_down(id)
                 case id
                 when Gosu::KB_ESCAPE
+                when Gosu::KB_Q
                     close
                 when Gosu::KB_SPACE
                     @paused = !@paused
